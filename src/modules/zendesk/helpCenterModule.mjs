@@ -1,5 +1,8 @@
 import { convert } from "html-to-text"
 import DatabaseModule from "../database/databaseModule.mjs"
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 class HelpCenterController {
 
@@ -11,8 +14,8 @@ class HelpCenterController {
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
                 html_url VARCHAR(255),
-                name VARCHAR(150),
-                title VARCHAR(150),
+                name VARCHAR(255),
+                title VARCHAR(255),
                 body TEXT
             );
         `
@@ -27,21 +30,18 @@ class HelpCenterController {
             const databaseModule = new DatabaseModule()
 
             const hasDatabase = await databaseModule.validateIfDatabaseExists(this.dbName)
-            console.log('HASDATABASE', hasDatabase)
 
             if (!hasDatabase) {
                 return 'sem database'
             }
 
             const teste = await databaseModule.createTableIfNotExists(this.tableQuery)
-            console.log('TESTE', teste)
 
             const initialUrl = 'pt-br/articles'
             let nextUrl = initialUrl + '.json?page[size]=100'
             let arr = []
             let count = 0
             while (nextUrl) {
-                console.log('NEXTURL', nextUrl)
                 const { data } = await this.axios.get(nextUrl)
                 arr.push(data.articles.map((article) => {
                     return {
@@ -54,12 +54,18 @@ class HelpCenterController {
                     }
                 }))
                 count += data.articles.length
-                if (data.meta.has_more) {
-                    const nextPage = data.links.next.split("center/")[1]
-                    nextUrl = nextPage
-                    console.log('SETOU A NOVA URL', nextPage)
+                if (data.meta && data.meta.has_more) {
+                    // data.links.next virá completo: 'https://operandsupport.zendesk.com/api/v2/help_center/pt-br/articles.json?page[after]=...'
+                    
+                    // Remove a baseURL da URL completa para obter o caminho relativo
+                    const nextFullUrl = data.links.next;
+                    
+                    // 1. Remove a baseURL do Zendesk para obter o caminho relativo (ex: 'pt-br/articles.json?page[after]=...')
+                    // Nota: A baseURL termina com um '/', que facilita a substituição
+                    nextUrl = nextFullUrl.replace(process.env.BASE_URL_ZENDESK, '');
+                    
                 } else {
-                    nextUrl = ''
+                    nextUrl = null // Termina o loop
                 }
             }
 

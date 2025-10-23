@@ -8,7 +8,7 @@ const auth = {
 }
 
 const instanceAxios = axios.create({
-    baseURL: 'https://operandsupport.zendesk.com/api/v2/help_center/',
+    baseURL: process.env.BASE_URL_ZENDESK,
     auth
 })
 

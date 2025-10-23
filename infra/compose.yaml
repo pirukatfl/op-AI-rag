@@ -5,3 +5,33 @@ services:
       - ../.env.development
     ports:
       - "5431:5432"
+    networks:
+    - op-ai-rag
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - NODE_ENV=development
+      - TZ=America/Sao_Paulo
+      # Chave de criptografia para credenciais (MUITO IMPORTANTE!)
+      # Gere uma chave forte (Ex: openssl rand -base64 32)
+      - N8N_ENCRYPTION_KEY=x6ESLE8RH5Lv7kat5oaDnlmKmh4CWhWKqNwvQqJtRkQ=
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=database
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=op_rag
+      - DB_POSTGRESDB_USER=operand
+      - DB_POSTGRESDB_PASSWORD=op_password
+    volumes:
+      - ./n8n_data:/home/furlan/.n8n
+    networks:
+      - op-ai-rag
+
+networks:
+  op-ai-rag:
+    name: op-ai-rag
